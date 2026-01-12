@@ -5,7 +5,7 @@
 **Exports:** Pure capabilities (types and implementations)
 
 The pure capability layer. Type definitions and their implementations with no side effects.
-
+'Spaces' should have vendor/tool agnostic naming whereas 'Bindings' can have the specific names.
 ---
 
 ## Structure

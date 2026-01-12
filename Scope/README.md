@@ -118,3 +118,4 @@ The bridge: `Universe/spaces/env/` generates these env vars from Scope.
 - All configurable values defined here
 - 1-1 spaces ↔ bindings mapping
 - Secrets via file paths, not inline values
+- **Paths are configuration** - file paths, URLs, etc. belong in Scope, not hardcoded in Mutability

@@ -12,13 +12,13 @@ The output layer. Everything the project produces.
 
 ```
 Artifacts/
-├── spaces/           # Output schemas/contracts
+├── spaces/           # Output schemas/templates (native language)
 │   ├── logs/
 │   ├── metrics/
 │   ├── reports/
 │   ├── builds/
 │   └── ...
-└── bindings/         # Concrete outputs
+└── bindings/         # Concrete outputs (runtime artifacts)
     ├── logs/
     ├── metrics/
     ├── reports/
@@ -28,17 +28,43 @@ Artifacts/
 
 ---
 
-## Spaces = Output Schemas
+## Language Agnosticism
 
-Define what outputs look like (contracts):
+**Artifacts are language-agnostic.** Schemas/templates live in their native language:
 
-```nix
-# Artifacts/spaces/logs/index.nix
-{
-  # Log output schema
-  # format: JSON
-  # fields: timestamp, level, message, context
-}
+```
+Artifacts/
+├── spaces/
+│   ├── daily/
+│   │   └── index.org     # Org-mode template (schema in native language)
+│   ├── metrics/
+│   │   └── index.py      # Python schema (pydantic, etc.)
+│   └── builds/
+│       └── index.nix     # Nix derivation schema
+└── bindings/
+    ├── daily/
+    │   └── *.org         # Runtime artifacts (date-based files)
+    ├── metrics/
+    │   └── index.py      # Concrete metric outputs
+    └── builds/
+        └── index.nix     # Concrete derivations
+```
+
+**Nix composition happens at Phase/ or Universe/ layers**, not in Artifacts.
+
+---
+
+## Spaces = Output Schemas (Native Language)
+
+Define what outputs look like in their native language:
+
+```org
+# Artifacts/spaces/daily/index.org
+#+TITLE: Daily Log Template
+* Daily Log: %<%Y-%m-%d>
+** Goals
+** Time Blocks
+** Notes
 ```
 
 ```python
@@ -49,21 +75,26 @@ class Metric(BaseModel):
     name: str
     value: float
     timestamp: str
-    labels: dict[str, str]
+```
+
+```nix
+# Artifacts/spaces/builds/index.nix
+{
+  # Build output schema
+}
 ```
 
 ---
 
 ## Bindings = Concrete Outputs
 
-Where outputs actually go:
+Where outputs actually live. **Runtime artifacts may have non-index filenames:**
 
-```nix
-# Artifacts/bindings/logs/index.nix
-{
-  path = "/var/log/app/";
-  rotation = "daily";
-}
+```
+Artifacts/bindings/daily/
+├── 2025-01-01.org    # Runtime artifact (date-based)
+├── 2025-01-02.org
+└── ...
 ```
 
 ```nix
@@ -72,9 +103,10 @@ Where outputs actually go:
 pkgs.stdenv.mkDerivation {
   name = "my-app";
   src = ./.;
-  # ...
 }
 ```
+
+**Note:** The `index.*` naming rule has an exception for Artifacts/bindings/ - runtime-generated files (logs, daily notes, etc.) may use descriptive names.
 
 ---
 
@@ -111,8 +143,10 @@ Every runtime artifact must have a schema:
 
 ## Invariants
 
-- Every output has a schema in spaces/
-- No surprise artifacts
+- Every output has a schema in spaces/ (native language)
+- No surprise artifacts (if not in spaces/, shouldn't exist)
 - 1-1 spaces ↔ bindings mapping
 - Subdir name = artifact type name
 - Maps to flake outputs where applicable
+- **Exception**: bindings/ may contain runtime-generated files with non-index names
+- Nix composition happens at Phase/ or Universe/, not here
